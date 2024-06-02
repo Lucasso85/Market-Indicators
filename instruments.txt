@@ -1,0 +1,41 @@
+KGH.PL_4,KGHM Polska Miedz SA CFD
+EUR.PL_4,Eurocash SA CFD
+PCO.PL_4,Pepco Group NV CFD
+KRU.PL_4,Kruk SA CFD
+GNB.PL_4,CLOSE ONLY / Getin Noble Bank SA CFD
+BHW.PL_4,Bank Handlowy w Warszawie SA CFD
+JSW.PL_4,Jastrzebska Spolka Weglowa SA CFD
+LWB.PL_4,Lubelski Wegiel Bogdanka SA CFD
+TPE.PL_4,TAURONPE CFD
+SNS.PL_4,CLOSE ONLY / Synthos SA
+ENA.PL_4,Enea SA CFD
+MIL.PL_4,Bank Millennium SA CFD
+BDX.PL_4,Budimex SA CFD
+DNP.PL_4,Dino Polska SA CFD
+ACP.PL_4,Asseco Poland SA CFD
+ING.PL_4,ING Bank Slaski CFD
+PEO.PL_4,Bank Pekao SA CFD
+CPS.PL_4,Cyfrowy Polsat SA CFD
+PZU.PL_4,Powszechny Zaklad Ubezpieczen SA CFD
+PKO.PL_4,Powszechna Kasa Oszczednosci Bank Polski CFD
+SPL.PL_4,Santander Bank Polska SA CFD
+EAT.PL_4,Amrest Holding NV CFD
+ATT.PL_4,Grupa Azoty SA CFD
+ENG.PL_4,Energa SA - class A 
+OPL.PL_4,Orange Polska SA CFD
+CAR.PL_4,Inter Cars SA CFD
+CDR.PL_4,CD Projekt SA CFD
+ALE.PL_4,Allegro.eu SA CFD
+PKP.PL_4,PKP Cargo SA  CFD
+ECH.PL_4,Echo Investment SA CFD
+ZAP.PL_4,Grupa Azoty Zaklady Azotowe Pulawy SA CFD
+CCC.PL_4,CCC SA CFD
+PKN.PL_4,Polski Koncern Naftowy Orlen CFD
+BRS.PL_4,CLOSE ONLY / Boryszew SA CFD
+ALR.PL_4,Alior Bank SA CFD
+GPW.PL_4,Gielda Papierow Wartosciowych SA CFD
+LPP.PL_4,LPP SA CFD
+LTS.PL_4,Grupa Lotos SA CFD
+PGE.PL_4,Polska Grupa Energetyczna SA CFD
+MRC.PL_4,Mercator Medical SA CFD
+MBK.PL_4,MBank SA CFD
