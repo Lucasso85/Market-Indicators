@@ -57,7 +57,7 @@ def send_request(sock, parameters):
             break
     return response[:response.find(END)].decode('UTF-8') if END in response else None
 
-def save_to_csv(dataframe, folder_path='C:/Users/lukas/Desktop/Projekty PY/API dane gieldowe/ALL_Symbols_data'):
+def save_to_csv(dataframe, folder_path='C:/Users/lukas/Desktop/Projekty PY/DASH_project/ALL_Symbols_data'):
     """Zapisywanie danych do pliku CSV i usuwanie starych plików"""
     logger.info("Zapisywanie danych do CSV")
     os.makedirs(folder_path, exist_ok=True)
@@ -78,10 +78,14 @@ def save_to_csv(dataframe, folder_path='C:/Users/lukas/Desktop/Projekty PY/API d
 def main():
     """Główna funkcja skryptu"""
     logger.info("Rozpoczęcie skryptu GetAllSymbols")
-    host = 'xapia.x-station.eu'
-    port = 5124
-    USERID = 16237362
-    PASSWORD = 'xoh12773'
+    host = 'xapi.xtb.com'
+    port = 5112 #Real port
+    USERID =  2812673  # Real Login 
+    PASSWORD = 'Levistrauss851!' # Real Password
+    # port = 5124
+    # USERID = 16237362 
+    # PASSWORD = 'xoh12773'
+   
 
     with create_ssl_socket(host, port) as sock:
         # Logowanie do API

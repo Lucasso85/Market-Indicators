@@ -6,66 +6,60 @@ from datetime import datetime, timedelta
 import os
 import time
 import glob
-import tkinter as tk
-from tkinter import ttk, messagebox
 import threading
 import logging
+from logging.handlers import TimedRotatingFileHandler
 
-# Ustawienia logowania
-log_folder = 'logs'
-os.makedirs(log_folder, exist_ok=True)
-log_filename = os.path.join(log_folder, 'GetChartLastRequest.log')
-state_filename = 'selected_instruments.json'  # Plik do zapisywania stanu wybranych instrumentów
+# Zaktualizowana klasa Logger
+class Logger:
+    loggers = {}
+    
+    @staticmethod
+    def get_logger(name):
+        if name in Logger.loggers:
+            return Logger.loggers[name]
+        
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+        
+        if logger.hasHandlers():
+            logger.handlers.clear()
+        
+        log_file = os.path.join('logs', f"{name}.log")
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+            
+        handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1)
+        handler.setLevel(logging.INFO)
+            
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler.setFormatter(formatter)
+            
+        logger.addHandler(handler)
 
-# Konfiguracja loggera
-logger = logging.getLogger('GetChartLastRequest')
-logger.setLevel(logging.INFO)
+        Logger.loggers[name] = logger
+        return logger
 
-# Tworzenie handlera do pliku
-file_handler = logging.FileHandler(log_filename)
-file_handler.setLevel(logging.INFO)
+# Przykładowe użycie loggera w głównym pliku kodu
+logger = Logger.get_logger('GetChartLastRequest')
 
-# Tworzenie handlera do konsoli
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-
-# Formatowanie logów
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-
-# Dodanie handlerów do loggera
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
-
-# Funkcja do wczytywania listy instrumentów z pliku
-def load_instruments(file_path='instruments.txt'):
-    """Wczytywanie listy instrumentów z pliku tekstowego"""
-    instruments = []
-    with open(file_path, 'r') as f:
-        for line in f:
-            parts = line.strip().split(',')
-            if len(parts) == 2:
-                instruments.append((parts[0], parts[1]))
-    return instruments
-
-# Funkcja do zapisywania stanu wybranych instrumentów
-def save_selected_instruments(selected_instruments):
-    with open(state_filename, 'w') as f:
-        json.dump(selected_instruments, f)
+# Ustawienia plików stanu
+state_instruments_filename = 'selected_instruments.json'
+state_periods_filename = 'selected_periods.json'
+DATA_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/DASH_project/LastRequest_data'
 
 # Funkcja do wczytywania stanu wybranych instrumentów
 def load_selected_instruments():
-    if os.path.exists(state_filename):
-        with open(state_filename, 'r') as f:
+    if os.path.exists(state_instruments_filename):
+        with open(state_instruments_filename, 'r') as f:
             return json.load(f)
     return []
 
-# Lista dostępnych instrumentów
-ALL_INSTRUMENTS = load_instruments()
-
-PERIODS = [5, 15, 60]
-DATA_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/API dane gieldowe/LastRequest_data'
+# Funkcja do wczytywania wybranych okresów
+def load_selected_periods():
+    if os.path.exists(state_periods_filename):
+        with open(state_periods_filename, 'r') as f:
+            return json.load(f)
+    return []
 
 def create_ssl_socket(host, port):
     """Tworzenie połączenia SSL"""
@@ -118,7 +112,7 @@ def save_to_csv(dataframe, symbol, period):
 
 def fetch_data(sock, symbol, period, userid, password):
     """Pobieranie danych wykresu dla danego symbolu i okresu"""
-    start_time = int((datetime.now() - timedelta(days=20)).timestamp() * 1000)
+    start_time = int((datetime.now() - timedelta(days=40)).timestamp() * 1000)
 
     get_chart_last_parameters = {
         "command": "getChartLastRequest",
@@ -154,90 +148,61 @@ def fetch_data(sock, symbol, period, userid, password):
             "timestamp": datetime.fromtimestamp(item['ctm'] / 1000),
             "open": item['open'] / factor,
             "close": (item['open'] + item['close']) / factor,
-            "high": item['high'] / factor,
-            "low": item['low'] / factor,
-            "vol": item['vol'],
+            "high": (item['open'] +item['high']) / factor,
+            "low": (item['open'] +item['low']) / factor,
+            "vol":  item['vol'] ,
             "INSTRUMENT": symbol
         } for item in rate_infos
     ]
     df = pd.DataFrame(data)
     
-    logger.info(str(df))
-    
     save_to_csv(df, symbol, period)
+
+def fetch_all_data(instruments, periods):
+    """Pobieranie danych dla wszystkich wybranych instrumentów i okresów"""
+    host = 'xapi.xtb.com'
+    port = 5112 #Real port
+    USERID =  2812673  # Real Login 
+    PASSWORD = 'Levistrauss851!' # Real Password
+    # host = 'xapia.x-station.eu'
+    # port = 5124
+    # USERID = 16237362
+    # PASSWORD = 'xoh12773'
+
+    with create_ssl_socket(host, port) as sock:
+        # Logowanie do API
+        login_parameters = {"command": "login", "arguments": {"userId": USERID, "password": PASSWORD}}
+        login_response = send_request(sock, login_parameters)
+        if not login_response:
+            logger.error('Logowanie nie powiodło się')
+            return
+
+        logger.info('Login response: ' + login_response)
+
+        for symbol in instruments:
+            for period in periods:
+                fetch_data(sock, symbol, period, USERID, PASSWORD)
+                time.sleep(1)  # Mała przerwa między zapytaniami
+
+        # Wylogowanie z API
+        logout_parameters = {"command": "logout"}
+        logout_response = send_request(sock, logout_parameters)
+        logger.info('Logout response: ' + logout_response)
 
 def main():
     """Główna funkcja skryptu"""
-    def on_start():
-        """Obsługa przycisku start"""
-        selected_instruments = [instr for instr, var in instruments_vars.items() if var.get()]
-        if not selected_instruments:
-            messagebox.showwarning("Brak wyboru", "Proszę wybrać co najmniej jeden instrument.")
-            return
+    selected_instruments = load_selected_instruments()
+    selected_periods = load_selected_periods()
+    
+    if not selected_instruments:
+        logger.error("Brak wybranych instrumentów. Proszę uruchomić skrypt wyboru instrumentów.")
+        return
 
-        # Zapisanie wybranego stanu do pliku
-        save_selected_instruments(selected_instruments)
-        
-        threading.Thread(target=fetch_all_data, args=(selected_instruments, PERIODS)).start()
+    if not selected_periods:
+        logger.error("Brak wybranych okresów. Proszę uruchomić skrypt wyboru okresów.")
+        return
 
-    def fetch_all_data(instruments, periods):
-        """Pobieranie danych dla wszystkich wybranych instrumentów i okresów"""
-        host = 'xapia.x-station.eu'
-        port = 5124
-        USERID = 16237362
-        PASSWORD = 'xoh12773'
-
-        with create_ssl_socket(host, port) as sock:
-            # Logowanie do API
-            login_parameters = {"command": "login", "arguments": {"userId": USERID, "password": PASSWORD}}
-            login_response = send_request(sock, login_parameters)
-            if not login_response:
-                logger.error('Logowanie nie powiodło się')
-                return
-
-            logger.info('Login response: ' + login_response)
-
-            for symbol in instruments:
-                for period in periods:
-                    fetch_data(sock, symbol, period, USERID, PASSWORD)
-                    time.sleep(1)  # Mała przerwa między zapytaniami
-
-            # Wylogowanie z API
-            logout_parameters = {"command": "logout"}
-            logout_response = send_request(sock, logout_parameters)
-            logger.info('Logout response: ' + logout_response)
-
-    # Interfejs użytkownika
-    root = tk.Tk()
-    root.title("Wybór instrumentów")
-
-    # Wczytywanie poprzedniego stanu wybranych instrumentów
-    previous_selected_instruments = load_selected_instruments()
-
-    # Tworzenie pól wyboru dla instrumentów w formie tabeli
-    instruments_vars = {}
-    num_rows = 15
-    num_cols = (len(ALL_INSTRUMENTS) + num_rows - 1) // num_rows  # Obliczanie liczby kolumn
-
-    table_frame = ttk.Frame(root)
-    table_frame.pack()
-
-    for col in range(num_cols):
-        for row in range(num_rows):
-            index = col * num_rows + row
-            if index < len(ALL_INSTRUMENTS):
-                symbol, description = ALL_INSTRUMENTS[index]
-                var = tk.BooleanVar(value=symbol in previous_selected_instruments)
-                chk = ttk.Checkbutton(table_frame, text=f"{symbol} - {description}", variable=var)
-                chk.grid(row=row, column=col, sticky='w')
-                instruments_vars[symbol] = var
-
-    # Przycisk start
-    btn_start = ttk.Button(root, text="Start", command=on_start)
-    btn_start.pack(pady=10)
-
-    # Uruchomienie interfejsu użytkownika
-    root.mainloop()
+    threading.Thread(target=fetch_all_data, args=(selected_instruments, selected_periods)).start()
 
 if __name__ == '__main__':
     logger.info("Rozpoczęcie skryptu GetChartLastRequest")

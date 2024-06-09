@@ -3,6 +3,7 @@ import glob
 import os
 import logging
 from datetime import datetime
+import json
 
 # Konfiguracja loggera - ustawienia logowania
 log_folder = 'logs'
@@ -23,16 +24,33 @@ logger.addHandler(file_handler)
 # StreamHandler - wyświetlanie logów w konsoli
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
-console_formatter = logging.Formatter('%(asctime)s %(levellevel)s %(message)s')
+console_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 console_handler.setFormatter(console_formatter)
 logger.addHandler(console_handler)
 
-# Lista instrumentów i okresów
-INSTRUMENTS = ['EURUSD', 'OIL.WTI', 'GOLD']  # Lista instrumentów
+# Stałe wartości
 PERIODS = [5, 15, 60]  # Lista okresów w minutach
-DATA_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/API dane gieldowe/LastRequest_data'  # Ścieżka do folderu z danymi
-SYMBOLS_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/API dane gieldowe/ALL_Symbols_data'  # Ścieżka do folderu z plikami symbols
+DATA_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/DASH_project/LastRequest_data'  # Ścieżka do folderu z danymi
+SYMBOLS_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/DASH_project/ALL_Symbols_data'  # Ścieżka do folderu z plikami symbols
 RESULTS_FOLDER = 'Results'  # Ścieżka do folderu z wynikami
+INSTRUMENTS_FILE = 'selected_instruments.json'  # Ścieżka do pliku JSON z instrumentami
+
+def load_instruments_from_json(file_path):
+    """
+    Wczytuje listę instrumentów z pliku JSON.
+    """
+    try:
+        with open(file_path, 'r') as f:
+            instruments = json.load(f)
+        if not instruments:
+            raise ValueError(f"Brak instrumentów w pliku {file_path}")
+        return instruments
+    except FileNotFoundError:
+        logger.error(f"Plik {file_path} nie został znaleziony.")
+        raise
+    except json.JSONDecodeError:
+        logger.error(f"Plik {file_path} nie jest poprawnym plikiem JSON.")
+        raise
 
 def load_latest_symbols_file(symbols_folder):
     """
@@ -100,6 +118,13 @@ def main():
     Główna funkcja programu: wczytywanie danych historycznych, tworzenie podsumowania, 
     wczytywanie najnowszego pliku symbols_*, dołączenie kolumny last_price i zapisanie summary_df do pliku CSV.
     """
+    # Wczytywanie instrumentów z pliku JSON
+    try:
+        INSTRUMENTS = load_instruments_from_json(INSTRUMENTS_FILE)
+    except (FileNotFoundError, ValueError) as e:
+        logger.error(e)
+        return
+
     # Tworzenie folderu Results, jeśli nie istnieje
     if not os.path.exists(RESULTS_FOLDER):
         os.makedirs(RESULTS_FOLDER)
@@ -120,8 +145,8 @@ def main():
     # Wczytanie najnowszego pliku symbols_* z folderu SYMBOLS_FOLDER
     ALL_Symbols = load_latest_symbols_file(SYMBOLS_FOLDER)
     
-    # Wybór kolumny "ask" z ALL_Symbols
-    last_prices = ALL_Symbols[['symbol', 'ask']].rename(columns={'symbol': 'Instrument', 'ask': 'last_price'})
+    # Wybór kolumny "bid" z ALL_Symbols
+    last_prices = ALL_Symbols[['symbol', 'bid']].rename(columns={'symbol': 'Instrument', 'bid': 'last_price'})
     
     # Dołączenie kolumny "last_price" do ramki danych summary_df
     summary_df = summary_df.merge(last_prices, on='Instrument', how='left')
