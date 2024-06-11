@@ -179,7 +179,7 @@ def calculate_HIT_200(summary_df):
                        (summary_df['mean_200'] - summary_df['high']).abs()], axis=1)).min(axis=1)
      ratio = min_diff / summary_df['last_close']
 
-# Ustawianie wartości wskaźnika HIT_50
+# Ustawianie wartości wskaźnika HIT_200
      summary_df['HIT_200'] = np.where(condition, 1, np.round(ratio, 3))
 
      return summary_df
@@ -226,7 +226,7 @@ def main():
     # dolaczanie wskaznikow
     summary_df = calculate_HIT_15 (summary_df)
     summary_df = calculate_HIT_50 (summary_df)
-   # summary_df = calculate_HIT_200 (summary_df)
+    summary_df = calculate_HIT_200 (summary_df)
     
     # Zapisanie summary_df do pliku CSV w folderze Results
     output_filename = os.path.join(RESULTS_FOLDER, "summary_data.csv")
