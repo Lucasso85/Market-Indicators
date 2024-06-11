@@ -82,9 +82,9 @@ def main():
     port = 5112 #Real port
     USERID =  2812673  # Real Login 
     PASSWORD = 'Levistrauss851!' # Real Password
-    # port = 5124
-    # USERID = 16237362 
-    # PASSWORD = 'xoh12773'
+    # port = 5124 # demo 
+    # USERID = 16237362 # demo 
+    # PASSWORD = 'xoh12773' # demo 
    
 
     with create_ssl_socket(host, port) as sock:

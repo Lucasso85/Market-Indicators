@@ -100,6 +100,11 @@ def save_to_csv(dataframe, symbol, period):
     # Usuwanie starych plików
     remove_old_files(folder_path, symbol, period)
     
+    # Sprawdzanie, czy kolumna 'timestamp' istnieje
+    if 'timestamp' not in dataframe.columns:
+        logger.error(f"Kolumna 'timestamp' nie istnieje dla symbolu {symbol} i okresu {period}. Pomijanie zapisu.")
+        return
+    
     # Sortowanie danych według znacznika czasu
     dataframe = dataframe.sort_values(by='timestamp', ascending=False)
     
@@ -112,7 +117,7 @@ def save_to_csv(dataframe, symbol, period):
 
 def fetch_data(sock, symbol, period, userid, password):
     """Pobieranie danych wykresu dla danego symbolu i okresu"""
-    start_time = int((datetime.now() - timedelta(days=40)).timestamp() * 1000)
+    start_time = int((datetime.now() - timedelta(days=120)).timestamp() * 1000)
 
     get_chart_last_parameters = {
         "command": "getChartLastRequest",
@@ -147,10 +152,10 @@ def fetch_data(sock, symbol, period, userid, password):
         {
             "timestamp": datetime.fromtimestamp(item['ctm'] / 1000),
             "open": item['open'] / factor,
-            "close": (item['open'] + item['close']) / factor,
+            "close": (item['open'] +item['close']) / factor,
             "high": (item['open'] +item['high']) / factor,
             "low": (item['open'] +item['low']) / factor,
-            "vol":  item['vol'] ,
+            "vol":  item['vol'],
             "INSTRUMENT": symbol
         } for item in rate_infos
     ]
@@ -182,7 +187,7 @@ def fetch_all_data(instruments, periods):
         for symbol in instruments:
             for period in periods:
                 fetch_data(sock, symbol, period, USERID, PASSWORD)
-                time.sleep(1)  # Mała przerwa między zapytaniami
+                time.sleep(0.2)  # Mała przerwa między zapytaniami
 
         # Wylogowanie z API
         logout_parameters = {"command": "logout"}
