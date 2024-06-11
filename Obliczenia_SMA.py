@@ -34,7 +34,7 @@ console_handler.setFormatter(console_formatter)
 logger.addHandler(console_handler)
 
 # Stałe wartości
-PERIODS = [ 15, 60, 240]  # Lista okresów w minutach
+PERIODS = [ 60, 240]  # Lista okresów w minutach
 DATA_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/DASH_project/LastRequest_data'  # Ścieżka do folderu z danymi
 SYMBOLS_FOLDER = 'C:/Users/lukas/Desktop/Projekty PY/DASH_project/ALL_Symbols_data'  # Ścieżka do folderu z plikami symbols
 RESULTS_FOLDER = 'Results'  # Ścieżka do folderu z wynikami
@@ -102,13 +102,13 @@ def create_summary(all_data):
                 "Instrument": symbol,
                 "Period": period,
                 "timestamp": latest_row['timestamp'],
-                "last_open": latest_row['open'],
-                "last_close": latest_row['close'],
-                'high': latest_row['high'],
-                'low': latest_row['low'],
-                "mean_15": mean_15,
-                "mean_50": mean_50,
-                "mean_200": mean_200
+                "last_open": float(latest_row['open']),
+                "last_close": float(latest_row['close']),
+                'high': float(latest_row['high']),
+                'low': float(latest_row['low']),
+                "mean_15": float(mean_15),
+                "mean_50": float(mean_50),
+                "mean_200": float(mean_200)
             })
 
     return pd.DataFrame(summary_data)
@@ -126,63 +126,37 @@ def save_summary_to_csv(summary_df, filename):
 # wskaźnik HIT_15 - przałamanie sredniej 15-okresowej
 
 def calculate_HIT_15(summary_df):
-    # Konwersja kolumn na typ float, aby uniknąć problemów z typami danych
-    summary_df['mean_15'] = summary_df['mean_15'].astype(float)
-    summary_df['low'] = summary_df['low'].astype(float)
-    summary_df['high'] = summary_df['high'].astype(float)
     
-    # Warunek sprawdzający, czy srednia 15-okresowa zostala naruszona przez ostatnia swiece
     condition = (summary_df['mean_15'] >= summary_df['low']) & (summary_df['mean_15'] <= summary_df['high'])
     
-    # Obliczanie wartości ilorazu MIN/'mean_15'
-    min_diff = (pd.concat([(summary_df['mean_15'] - summary_df['low']).abs(),
-                           (summary_df['mean_15'] - summary_df['high']).abs()], axis=1)).min(axis=1)
-    ratio = min_diff / summary_df['last_close']
+    # Ustawianie wartości wskaźnika HIT_15 na True lub False
+    summary_df['HIT_15'] = condition
     
-    # Ustawianie wartości wskaźnika HIT_15
-    summary_df['HIT_15'] = np.where(condition, 1, np.round(ratio, 3))
-    
+    # Możliwość zwrócenia DataFrame, jeśli potrzebne
     return summary_df
 
 # wskaźnik HIT_50 - przałamanie sredniej 50-okresowej
 def calculate_HIT_50(summary_df):
-    # Konwersja kolumn na typ float, aby uniknąć problemów z typami danych
-    summary_df['mean_50'] = summary_df['mean_50'].astype(float)
-    summary_df['low'] = summary_df['low'].astype(float)
-    summary_df['high'] = summary_df['high'].astype(float)
     
-    # Warunek sprawdzający, czy srednia 50-okresowa zostala naruszona przez ostatnia swiece
     condition = (summary_df['mean_50'] >= summary_df['low']) & (summary_df['mean_50'] <= summary_df['high'])
     
-    # Obliczanie wartości ilorazu MIN/'mean_15'
-    min_diff = (pd.concat([(summary_df['mean_50'] - summary_df['low']).abs(),
-                           (summary_df['mean_50'] - summary_df['high']).abs()], axis=1)).min(axis=1)
-    ratio = min_diff / summary_df['last_close']
+    # Ustawianie wartości wskaźnika HIT_50 na True lub False
+    summary_df['HIT_50'] = condition
     
-    # Ustawianie wartości wskaźnika HIT_50
-    summary_df['HIT_50'] = np.where(condition, 1, np.round(ratio, 3))
-    
+    # Możliwość zwrócenia DataFrame, jeśli potrzebne
     return summary_df
 
 # wskaźnik HIT_200 - przałamanie sredniej 200-okresowej
 
 def calculate_HIT_200(summary_df):
-     summary_df['mean_200'] = summary_df['mean_200'].astype(float)
-     summary_df['low'] = summary_df['low'].astype(float)
-     summary_df['high'] = summary_df['high'].astype(float)
-     
-     # Warunek sprawdzajacy czy srednia 200-okresowa zostala naruszona przez ostatnia swiece
-     condition = (summary_df['mean_200'] >= summary_df['low']) & (summary_df['mean_200'] <= summary_df['high'])
-
-# Obliczanie wartości ilorazu MIN/'mean_200'
-     min_diff = (pd.concat([(summary_df['mean_200'] - summary_df['low']).abs(),
-                       (summary_df['mean_200'] - summary_df['high']).abs()], axis=1)).min(axis=1)
-     ratio = min_diff / summary_df['last_close']
-
-# Ustawianie wartości wskaźnika HIT_200
-     summary_df['HIT_200'] = np.where(condition, 1, np.round(ratio, 3))
-
-     return summary_df
+    
+    condition = (summary_df['mean_200'] >= summary_df['low']) & (summary_df['mean_200'] <= summary_df['high'])
+    
+    # Ustawianie wartości wskaźnika HIT_200 na True lub False
+    summary_df['HIT_200'] = condition
+    
+    # Możliwość zwrócenia DataFrame, jeśli potrzebne
+    return summary_df
     
 
 def main():
