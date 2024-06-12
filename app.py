@@ -14,9 +14,9 @@ app = dash.Dash(__name__)
 app.layout = html.Div([
     html.Div([
         html.Button('Uruchom GetAllSymbols', id='btn-GetAllSymbols', n_clicks=0, className='button'),
-      #  html.Button('Uruchom GetChartLastRequest', id='btn-GetChartLastRequest', n_clicks=0, className='button'),
-       # html.Button('Uruchom Obliczenia_SMA', id='btn-Obliczenia_SMA', n_clicks=0, className='button'),
-        #html.Button('Uruchom select_instrument', id='btn-select_instrument', n_clicks=0, className='button')
+        # html.Button('Uruchom GetChartLastRequest', id='btn-GetChartLastRequest', n_clicks=0, className='button'),
+        # html.Button('Uruchom Obliczenia_SMA', id='btn-Obliczenia_SMA', n_clicks=0, className='button'),
+        # html.Button('Uruchom select_instrument', id='btn-select_instrument', n_clicks=0, className='button')
     ], className='button-container'),
     html.Div(id='output-container')
 ])
@@ -24,10 +24,7 @@ app.layout = html.Div([
 # Callbacki do uruchamiania skryptów
 @app.callback(
     Output('output-container', 'children'),
-    [Input('btn-GetAllSymbols', 'n_clicks'),
-   #  Input('btn-GetChartLastRequest', 'n_clicks'),
-    # Input('btn-Obliczenia_SMA', 'n_clicks'),
-     #Input('btn-select_instrument', 'n_clicks')]
+    [Input('btn-GetAllSymbols', 'n_clicks')]
 )
 def run_script(nGetAllSymbols):
     ctx = dash.callback_context
@@ -38,12 +35,12 @@ def run_script(nGetAllSymbols):
 
     if button_id == 'btn-GetAllSymbols':
         result = GetAllSymbols.main()
-    #elif button_id == 'btn-GetChartLastRequest':
-        result = GetChartLastRequest.main()
-    #elif button_id == 'btn-Obliczenia_SMA':
-        result = Obliczenia_SMA.main()
-    #elif button_id == 'btn-select_instrument':
-        result = select_instrument.main()
+    # elif button_id == 'btn-GetChartLastRequest':
+    #     result = GetChartLastRequest.main()
+    # elif button_id == 'btn-Obliczenia_SMA':
+    #     result = Obliczenia_SMA.main()
+    # elif button_id == 'btn-select_instrument':
+    #     result = select_instrument.main()
     else:
         result = 'Naciśnij przycisk, aby uruchomić skrypt'
 
