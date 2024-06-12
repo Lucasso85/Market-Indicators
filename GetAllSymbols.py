@@ -79,58 +79,69 @@ def main():
     """Główna funkcja skryptu"""
     logger.info("Rozpoczęcie skryptu GetAllSymbols")
     host = 'xapi.xtb.com'
-    port = 5112 #Real port
+    port = 5112 # Real port
     USERID =  2812673  # Real Login 
     PASSWORD = 'Levistrauss851!' # Real Password
     # port = 5124 # demo 
     # USERID = 16237362 # demo 
     # PASSWORD = 'xoh12773' # demo 
    
-
-    with create_ssl_socket(host, port) as sock:
-        # Logowanie do API
-        login_parameters = {
-            "command": "login",
-            "arguments": {
-                "userId": USERID,
-                "password": PASSWORD
+    result_message = ""
+    try:
+        with create_ssl_socket(host, port) as sock:
+            # Logowanie do API
+            login_parameters = {
+                "command": "login",
+                "arguments": {
+                    "userId": USERID,
+                    "password": PASSWORD
+                }
             }
-        }
-        login_response = send_request(sock, login_parameters)
-        if not login_response:
-            logger.error('Logowanie nie powiodło się')
-            return
+            login_response = send_request(sock, login_parameters)
+            if not login_response:
+                logger.error('Logowanie nie powiodło się')
+                result_message = 'Logowanie nie powiodło się'
+                return result_message
 
-        logger.info('Login response: ' + login_response)
+            logger.info('Login response: ' + login_response)
 
-        # Odpytanie o wszystkie symbole
-        get_all_symbols_parameters = {"command": "getAllSymbols"}
-        symbols_response = send_request(sock, get_all_symbols_parameters)
-        if not symbols_response:
-            logger.error('Brak odpowiedzi na zapytanie getAllSymbols.')
-            return
+            # Odpytanie o wszystkie symbole
+            get_all_symbols_parameters = {"command": "getAllSymbols"}
+            symbols_response = send_request(sock, get_all_symbols_parameters)
+            if not symbols_response:
+                logger.error('Brak odpowiedzi na zapytanie getAllSymbols.')
+                result_message = 'Brak odpowiedzi na zapytanie getAllSymbols.'
+                return result_message
 
-        symbols_data = json.loads(symbols_response)
-        if not symbols_data['status']:
-            logger.error('Błąd w odpowiedzi: ' + str(symbols_data))
-            return
+            symbols_data = json.loads(symbols_response)
+            if not symbols_data['status']:
+                logger.error('Błąd w odpowiedzi: ' + str(symbols_data))
+                result_message = 'Błąd w odpowiedzi: ' + str(symbols_data)
+                return result_message
 
-        logger.info('Otrzymano dane symboli')
-        
-        # Tworzenie ramki danych z wyników
-        all_symbols = pd.DataFrame(symbols_data['returnData'])
-        if 'time' in all_symbols.columns:
-            all_symbols['time'] = pd.to_datetime(all_symbols['time'], unit='ms', errors='coerce')
+            logger.info('Otrzymano dane symboli')
+            
+            # Tworzenie ramki danych z wyników
+            all_symbols = pd.DataFrame(symbols_data['returnData'])
+            if 'time' in all_symbols.columns:
+                all_symbols['time'] = pd.to_datetime(all_symbols['time'], unit='ms', errors='coerce')
 
-        logger.info(str(all_symbols))
-        
-        # Zapis danych do pliku CSV
-        save_to_csv(all_symbols)
+            logger.info(str(all_symbols))
+            
+            # Zapis danych do pliku CSV
+            save_to_csv(all_symbols)
 
-        # Wylogowanie
-        logout_parameters = {"command": "logout"}
-        logout_response = send_request(sock, logout_parameters)
-        logger.info('Logout response: ' + logout_response)
+            # Wylogowanie
+            logout_parameters = {"command": "logout"}
+            logout_response = send_request(sock, logout_parameters)
+            logger.info('Logout response: ' + logout_response)
+            
+            result_message = "Pomyślnie wykonano skrypt GetAllSymbols."
+    except Exception as e:
+        logger.error(f'Błąd: {str(e)}')
+        result_message = f'Błąd: {str(e)}'
+
+    return result_message
 
 if __name__ == '__main__':
     main()

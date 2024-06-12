@@ -1,63 +1,53 @@
 import dash
-from dash import dcc, html, Input, Output
-import pandas as pd
-import os
+from dash import dcc, html
+from dash.dependencies import Input, Output
+
+# Importowanie skryptów
+import GetAllSymbols
+import GetChartLastRequest
+import Obliczenia_SMA
+import select_instrument
 
 app = dash.Dash(__name__)
 
 # Layout aplikacji
 app.layout = html.Div([
-    dcc.Interval(id='interval-component', interval=5*60*1000, n_intervals=0),  # Odświeżanie co 5 minut
-    dcc.Dropdown(id='instrument-dropdown', options=[], value=None),
-    html.Div(id='alerts'),
-    html.Div(id='instrument-info')
+    html.Div([
+        html.Button('Uruchom GetAllSymbols', id='btn-GetAllSymbols', n_clicks=0, className='button'),
+        html.Button('Uruchom GetChartLastRequest', id='btn-GetChartLastRequest', n_clicks=0, className='button'),
+        html.Button('Uruchom Obliczenia_SMA', id='btn-Obliczenia_SMA', n_clicks=0, className='button'),
+        html.Button('Uruchom select_instrument', id='btn-select_instrument', n_clicks=0, className='button')
+    ], className='button-container'),
+    html.Div(id='output-container')
 ])
 
+# Callbacki do uruchamiania skryptów
 @app.callback(
-    Output('instrument-dropdown', 'options'),
-    Input('interval-component', 'n_intervals')
+    Output('output-container', 'children'),
+    [Input('btn-GetAllSymbols', 'n_clicks'),
+     Input('btn-GetChartLastRequest', 'n_clicks'),
+     Input('btn-Obliczenia_SMA', 'n_clicks'),
+     Input('btn-select_instrument', 'n_clicks')]
 )
-def update_dropdown(n_intervals):
-    files = os.listdir('processed')
-    latest_file = max(files, key=lambda x: os.path.getctime(os.path.join('processed', x)))
-    df = pd.read_csv(os.path.join('processed', latest_file))
-    
-    options = [{'label': i, 'value': i} for i in df['INSTRUMENT'].unique()]
-    return options
+def run_script(nGetAllSymbols, nGetChartLastRequest, nObliczanie_SMA, nSelect_instrument):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        button_id = 'None'
+    else:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-@app.callback(
-    Output('alerts', 'children'),
-    Input('interval-component', 'n_intervals')
-)
-def update_alerts(n_intervals):
-    files = os.listdir('processed')
-    latest_file = max(files, key=lambda x: os.path.getctime(os.path.join('processed', x)))
-    df = pd.read_csv(os.path.join('processed', latest_file))
-    
-    alerts = df[df['mean'] > 10]  # Przykładowy alert, gdy średnia > 10
-    alert_components = [html.Div(f"Alert: {row['INSTRUMENT']} - {row['mean']}") for index, row in alerts.iterrows()]
-    return alert_components
+    if button_id == 'btn-GetAllSymbols':
+        result = GetAllSymbols.main()
+    elif button_id == 'btn-GetChartLastRequest':
+        result = GetChartLastRequest.main()
+    elif button_id == 'btn-Obliczenia_SMA':
+        result = Obliczenia_SMA.main()
+    elif button_id == 'btn-select_instrument':
+        result = select_instrument.main()
+    else:
+        result = 'Naciśnij przycisk, aby uruchomić skrypt'
 
-@app.callback(
-    Output('instrument-info', 'children'),
-    Input('instrument-dropdown', 'value')
-)
-def display_instrument_info(instrument):
-    if not instrument:
-        return "Select an instrument to see details."
-    
-    # Pobieranie dodatkowych informacji z API
-    url = f'https://api.example.com/instruments/{instrument}'
-    response = requests.get(url)
-    data = response.json()
-    
-    info_components = [
-        html.Div(f"Name: {data['name']}"),
-        html.Div(f"Description: {data['description']}"),
-        # Dodaj inne informacje
-    ]
-    
-    return info_components
+    return f'Wynik: {result}'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
